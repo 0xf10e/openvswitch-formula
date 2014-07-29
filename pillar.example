@@ -1,0 +1,4 @@
+openvswitch:
+  br-int:
+    ports:
+      - eth0

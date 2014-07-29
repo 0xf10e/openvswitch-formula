@@ -1,0 +1,6 @@
+{% set openvswitch = salt['grains.filter_by']({
+    'default': {
+        'pkg': 'openvswitch-switch',
+        'service': 'openvswitch-switch',
+    },
+}, merge=salt['pillar.get']('openvswitch:lookup')) %}
