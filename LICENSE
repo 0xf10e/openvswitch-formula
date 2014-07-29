@@ -1,3 +1,9 @@
    Copyright (c) 2014 Fraunhofer FOKUS
 
    All rights reserved.
+
+Borrowed code from SaltStack's [0] "bridge" module [1] licensed under
+the Apache Software License.
+
+  [0] http://saltstack.org
+  [1] https://github.com/saltstack/salt/blob/develop/salt/modules/bridge.py
