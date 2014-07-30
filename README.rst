@@ -14,8 +14,8 @@ A saltstack formula for deploying OpenVSwitch_.
 TODO
 ====
    
- - add commandline examples to inline documentation (see code from
-   the `bridge module`_)
+ - add commandline examples to inline documentation (see the official
+   `bridge module's code`_)
  - make OVS module State-aware
  - build formula to move configuration (IP addr etc.) from interface 
    used as uplink to given OVS-bridge
@@ -27,7 +27,8 @@ TODO
  - eventually move module from using cmdline tools to OVS' JSON RPC 
    interface (probably based on code from OpenStack's Neutron)
 
-.. _bridge module: https://github.com/saltstack/salt/blob/develop/salt/modules/bridge.py
+.. _bridge module's code: 
+   https://github.com/saltstack/salt/blob/develop/salt/modules/bridge.py
 
 Mostly done:
  - implement OVS module for SaltStack (using the `ovs-*` commandline
@@ -47,3 +48,18 @@ Available states
 
 Installs the packages for openvswitch and starts the associated services 
 though not distribution aware yet (probably won't work on RHEL/CentOS/etc.)
+
+Available modules
+=================
+
+.. contents::
+    :local:
+
+``ovs_bridge``
+--------------
+A module to manage OpenVSwitch bridges on supported Platforms (Linux and,
+in theory, FreeBSD and NetBSD). Its functions mirror those of the official
+`bridge module`_.
+
+.. _bridge module: 
+  http://docs.saltstack.com/en/latest/ref/modules/all/salt.modules.bridge.html

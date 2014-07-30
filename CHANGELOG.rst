@@ -12,6 +12,7 @@ openvswitch-formula
     - delif(br, iface)
     - exists(br)
     - interfaces(br)
+    - find_interfaces(\*ifaces)
     - list()
     - show()
     - test()
