@@ -111,8 +111,8 @@ def exists(br):
 def find_interfaces(*args):
     '''
     Returns a dict mapping interfaces to the bridge they're bond to.
-    The dict doesn't contain entries for non-existant interfaces
-    or interfaces not bond to a bridge.
+    Non-existant interfaces or interfaces not bond to a bridge get
+    mapped to 'None'.
 
     CLI Example:
 
@@ -128,6 +128,8 @@ def find_interfaces(*args):
             if iface in interfaces(br):
                 ifdict[iface] = br
                 break
+        else:
+            ifdict[iface] = None
 
     return ifdict
 
