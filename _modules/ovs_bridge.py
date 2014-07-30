@@ -9,7 +9,15 @@ Based on the Apache licensed salt/modules/bridge.py.
 :platform:      Linux,FreeBSD
 '''
 
+# TODO:
+#   - def find_interfaces(*args): Returns the bridge to 
+#       which the interfaces are bond to
+
 import salt.utils
+
+__func_alias__ = {
+    'list_': 'list'
+}
 
 def __virtual__():
     '''
@@ -44,7 +52,7 @@ def add(br):
 
 def addif(br, iface):
     '''
-    Add interface as port on given bridge.
+    On given bridge, add interface as port.
     
     .. code-block:: bash
     
@@ -70,6 +78,23 @@ def delete(br):
     else:
         return False
 
+def delif(br, iface):
+    '''
+    On given bridge, delete interface as port.
+    
+    .. code-block:: bash
+    
+    salt '*' ovs_bridge.delif ovs-br0 eth0
+    '''
+    retcode = __salt__['cmd.retcode'](
+            'ovs-vsctl del-port {0} {1}'.format(str(br),str(iface))
+            )
+    if retcode == 0:
+        return True
+    else:
+        return False
+
+
 def exists(br):
     '''
     Check if given OVS bridge exists.
@@ -84,8 +109,47 @@ def exists(br):
     else:
         raise ValueError
 
+def interfaces(br):
+    '''
+    Returns interfaces attached to a bridge
+
+    CLI Example:
+
+    .. code-block:: bash
+
+    salt '*' ovs_bridge.interfaces br0
+    '''
+    if not exists(br):
+        return None
+
+    ports = []
+    cmd_output = __salt__['cmd.run']('ovs-vsctl list-ports {0}'.format(br))
+    for line in cmd_output.splitlines():
+        ports += [line]
+        
+    return ports
+
+def list_():
+    '''
+    Returns the machine's OVS bridges list
+
+    CLI Example:
+
+    .. code-block:: bash
+
+    salt '*' ovs_bridge.list
+    '''
+
+    brlist = []
+
+    cmd_output = __salt__['cmd.run']('ovs-vsctl list-br')
+    for line in cmd_output.splitlines():
+        brlist += [line]
+
+    return brlist
+
 def show():
     '''
-    Run `ovs-vsctl show` and return output.
+    Run `ovs-vsctl show` and return (unparsed) output.
     '''
     return __salt__['cmd.run']('ovs-vsctl show')
