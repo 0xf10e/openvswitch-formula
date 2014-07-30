@@ -1,6 +1,11 @@
 openvswitch-formula
 ===================
 
+0.2 (2014-07-30)
+
+- Implemented a state modul to create bridges, add ports
+  and optionally also remove ports not listed.
+
 0.1 (2014-07-30)
 
 - Initial version, implemented following functions in module

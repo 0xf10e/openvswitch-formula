@@ -16,7 +16,8 @@ TODO
    
  - add commandline examples to inline documentation (see the official
    `bridge module's code`_)
- - make OVS module State-aware
+ - ``ovs_brigde.managed(force=True)`` to remove an interface when it's
+   bonded to the wrong bridge?
  - build formula to move configuration (IP addr etc.) from interface 
    used as uplink to given OVS-bridge
  - identify packages on different distributions and update map.jinja 
@@ -30,12 +31,6 @@ TODO
 .. _bridge module's code: 
    https://github.com/saltstack/salt/blob/develop/salt/modules/bridge.py
 
-Mostly done:
- - implement OVS module for SaltStack (using the `ovs-*` commandline
-   tools):
-
-    - create/delete/check for bridges
-    - assign interfaces as ports
 
 Available states
 ================
@@ -47,7 +42,10 @@ Available states
 ---------------
 
 Installs the packages for openvswitch and starts the associated services 
-though not distribution aware yet (probably won't work on RHEL/CentOS/etc.)
+though not distribution aware yet (probably won't work on RHEL/CentOS/etc.).
+Afterwards creates the bridges listed in ``pillar[openvswitch:bridges]``.
+If a bridge hast a list of ports those interfaces are added to the bridge.
+If the parameter 'clean' is set to ``True`` any other interfaces are removed.
 
 Available modules
 =================
