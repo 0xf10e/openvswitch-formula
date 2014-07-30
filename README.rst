@@ -12,22 +12,27 @@ A saltstack formula for deploying OpenVSwitch_.
     <http://docs.saltstack.com/topics/conventions/formulas.html>`_.
 
 TODO
-----
- 
- - implement OVS module for SaltStack (using the `ovs-*` commandline
-   tools):
-
-    - create bridges
-    - assign interfaces as ports
-    - move configuration (IP addr etc.) from interface used 
-      as uplink to OVS-bridge
+====
    
+ - add commandline examples to inline documentation (see code from
+   the `bridge module`_)
+ - make OVS module State-aware
+ - build formula to move configuration (IP addr etc.) from interface 
+   used as uplink to given OVS-bridge
  - identify packages on different distributions and update map.jinja 
    acordingly
  - define a bool for kernel module via DKMS or not on Debian/Ubuntu
- - make OVS module State-aware
  - eventually move module from using cmdline tools to OVS' JSON RPC 
    interface (probably based on code from OpenStack's Neutron)
+
+.. _bridge module: https://github.com/saltstack/salt/blob/develop/salt/modules/bridge.py
+
+Mostly done:
+ - implement OVS module for SaltStack (using the `ovs-*` commandline
+   tools):
+
+    - create/delete/check for bridges
+    - assign interfaces as ports
 
 Available states
 ================
@@ -38,4 +43,5 @@ Available states
 ``openvswitch``
 ---------------
 
-Installs the packages for openvswitch and starts the associated services.
+Installs the packages for openvswitch and starts the associated services 
+though not distribution aware yet (probably won't work on RHEL/CentOS/etc.)
