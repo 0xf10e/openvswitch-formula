@@ -1,4 +1,10 @@
 openvswitch:
-  br-int:
-    ports:
-      - eth0
+  bridges:
+    ovs-br0:
+      ports:
+        - eth0
+    ovs-br1:
+      clean: True
+      ports:
+        - eth1
+        - eth2
