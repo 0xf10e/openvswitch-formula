@@ -9,11 +9,8 @@ Based on the Apache licensed salt/modules/bridge.py.
 :platform:      Linux,FreeBSD
 '''
 
-# TODO:
-#   - def find_interfaces(*args): Returns the bridge to 
-#       which the interfaces are bond to
-
 import salt.utils
+from salt.exceptions import CommandExecutionError, SaltInvocationError
 
 __func_alias__ = {
     'list_': 'list'
@@ -47,8 +44,10 @@ def add(br):
     retcode = __salt__['cmd.retcode']('ovs-vsctl add-br {0}'.format(str(br)))
     if retcode == 0:
         return True
-    else:
+    elif exists(br):
         return False
+    else:
+        raise CommandExecutionError
 
 def addif(br, iface):
     '''
@@ -107,7 +106,30 @@ def exists(br):
     elif retcode == 2:
         return False
     else:
-        raise ValueError
+        raise CommandExecutionError
+
+def find_interfaces(*args):
+    '''
+    Returns a dict mapping interfaces to the bridge they're bond to.
+    The dict doesn't contain entries for non-existant interfaces
+    or interfaces not bond to a bridge.
+
+    CLI Example:
+
+    .. code-block:: bash
+
+    salt '*' ovs_bridge.find_interfaces eth0 [eth1...]
+    '''
+
+    ifdict = {}
+
+    for iface in args:
+        for br in list_():
+            if iface in interfaces(br):
+                ifdict[iface] = br
+                break
+
+    return ifdict
 
 def interfaces(br):
     '''
