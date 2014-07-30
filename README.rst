@@ -22,6 +22,8 @@ TODO
  - identify packages on different distributions and update map.jinja 
    acordingly
  - define a bool for kernel module via DKMS or not on Debian/Ubuntu
+ - make ovs_bridge.show() return a real dict not just txt resambling
+   YAML/JSON
  - eventually move module from using cmdline tools to OVS' JSON RPC 
    interface (probably based on code from OpenStack's Neutron)
 
