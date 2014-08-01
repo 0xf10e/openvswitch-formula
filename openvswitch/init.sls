@@ -40,13 +40,9 @@ openvswitch:
     - require:
       - ovs_bridge: {{ bridge }}
 
-{# TODO: - make promisc persistant
-         - don't assume the netmask ist always 255.255.255.0 #}
-
 strip netcfg from {{ uplink_iface }}:
   cmd.run:
-    {# beware of the netmask set to /24 ! #}
-    - name: ip link set promisc on dev {{ uplink_iface }} && ip addr del {{ netcfg['inet'][0]['address'] }}/24 dev {{ uplink_iface }}
+    - name: ip link set promisc on dev {{ uplink_iface }} && ip addr del {{ netcfg['inet'][0]['address'] }}/{{ salt['netcfg.netmask2prefix'](netcfg['inet'][0]['netmask']) }} dev {{ uplink_iface }}
     - require:
       - ovs_bridge: {{ bridge }}
       - network: {{ bridge }}

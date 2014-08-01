@@ -15,8 +15,6 @@ TODO
 ====
    
  - make promisc for ``reuse_netcfg``-interface persistent
- - don't assume the netmask is 255.255.255.0
-
  - add documentation for ``_modules/ovs_bridge``, ``_states/ovs_bridge``
    below
  - add commandline examples to inline documentation (see the official
