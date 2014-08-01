@@ -28,13 +28,19 @@ def managed(name,create=True,ports=[],clean=False):
         __salt__['ovs_bridge.add'](name)
         ret['changes'][name] = 'New ovs_bridge'
 
+    if ports and not isinstance(ports, list):
+        # I sure hope a str doesn't qualify as list...
+        raise ValueError
     for iface in ports:
-        if __salt__['ovs_bridge.addif'](name, iface):
+        if __salt__['ovs_bridge.find_interfaces'](iface)[iface] == name:
+            continue
+        elif __salt__['ovs_bridge.addif'](name, iface):
             ret['changes'][iface] = 'Added to bridge "{0}"'.format(name)
         else:
             ret['result'] = False
             ret['comment'] = 'Failed to add one or more ports to '\
-                            'bridge "{0}"'.format(name)
+                            'bridge "{0}" ("{1}" among others).'\
+                            ''.format(name,iface)
     if not clean:
         return ret
 
