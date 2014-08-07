@@ -26,6 +26,7 @@ openvswitch:
   {% set uplink_iface = salt['pillar.get'](reuse_pillar, False) %}
   {% if uplink_iface %}
      {% set netcfg = salt['network.interfaces']()[uplink_iface] %}
+     {% set def_route = salt['network.get_route'](dest='default',iface=uplink_iface) %}
   {#- require:
       - network: {{ uplink_iface }} #}
   {#  - module: ovs_bridge #}
@@ -37,12 +38,15 @@ openvswitch:
     - ipaddr: {{ netcfg['inet'][0]['address'] }}
     - netmask: {{ netcfg['inet'][0]['netmask'] }}
     - broadcast: {{ netcfg['inet'][0]['broadcast'] }}
+      {% if def_route != [] %}
+    - gateway: {{ def_route[0]['gateway'] }}
+      {% endif %}
     - require:
       - ovs_bridge: {{ bridge }}
 
 strip netcfg from {{ uplink_iface }}:
   cmd.run:
-    - name: ip link set promisc on dev {{ uplink_iface }} && ip addr del {{ netcfg['inet'][0]['address'] }}/{{ salt['netcfg.netmask2prefix'](netcfg['inet'][0]['netmask']) }} dev {{ uplink_iface }}
+    - name: ip link set promisc on dev {{ uplink_iface }} && ip addr del {{ netcfg['inet'][0]['address'] }}/{{ salt['netcfg.netmask2prefixlen'](netcfg['inet'][0]['netmask']) }} dev {{ uplink_iface }}
     - require:
       - ovs_bridge: {{ bridge }}
       - network: {{ bridge }}

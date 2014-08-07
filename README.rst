@@ -14,6 +14,8 @@ A saltstack formula for deploying OpenVSwitch_.
 TODO
 ====
    
+ - get network.get_route(iface=None,dest=None) into SaltStack so 
+   we don't have to use a custom ``network``-module
  - make promisc for ``reuse_netcfg``-interface persistent
  - add documentation for ``_modules/ovs_bridge``, ``_states/ovs_bridge``
    below
