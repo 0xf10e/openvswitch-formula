@@ -1,19 +1,18 @@
 '''
 Little functions like turning a netmask into a CIDR prefix 
 length (would be great as custom filter in jinja, right?).
+
+Also available as network.netmask_to_prefixlen in
+https://github.com/0xf10e/salt
 '''
 def netmask2prefixlen(netmask):
     '''
     Takes a netmask like '255.255.255.0' 
     and returns a prefix length like '24'.
     '''
-    n = 3
+    netmask = netmask.split('.')
     sum = 0
-    for el in netmask.split('.'):
-        el = int(el)
-        el = el << (n * 8)
-        sum += el
-        n -= 1
-     
+    for idx in range(3,-1,-1):
+        sum += int(netmask[idx]) << (idx * 8)
     prefixlen = format(sum,'0b').count('1')
     return '{0}'.format(prefixlen)

@@ -46,7 +46,12 @@ openvswitch:
 
 strip netcfg from {{ uplink_iface }}:
   cmd.run:
-    - name: ip link set promisc on dev {{ uplink_iface }} && ip addr del {{ netcfg['inet'][0]['address'] }}/{{ salt['netcfg.netmask2prefixlen'](netcfg['inet'][0]['netmask']) }} dev {{ uplink_iface }}
+      {% if 'netcfg.netmask2prefixlen' in salt['sys.list_functions']('network') %}
+        {% set prefixlen = salt['netcfg.netmask2prefixlen'](netcfg['inet'][0]['netmask']) %}
+      {% elif 'network.netmask_to_prefixlen' in salt['sys.list_functions']('network') %}
+        {% set prefixlen = salt['network.netmask_to_prefixlen'](netcfg['inet'][0]['netmask']) %}
+      {% endif %}
+    - name: ip link set promisc on dev {{ uplink_iface }} && ip addr del {{ netcfg['inet'][0]['address'] }}/{{ prefixlen }} dev {{ uplink_iface }}
     - require:
       - ovs_bridge: {{ bridge }}
       - network: {{ bridge }}
