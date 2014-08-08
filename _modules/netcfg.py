@@ -11,8 +11,8 @@ def netmask2prefixlen(netmask):
     and returns a prefix length like '24'.
     '''
     netmask = netmask.split('.')
-    sum = 0
-    for idx in range(3,-1,-1):
-        sum += int(netmask[idx]) << (idx * 8)
-    prefixlen = format(sum,'0b').count('1')
+    bitmask = 0
+    for idx in range(3, -1, -1):
+        bitmask += int(netmask[idx]) << (idx * 8)
+    prefixlen = format(bitmask, '0b').count('1')
     return '{0}'.format(prefixlen)

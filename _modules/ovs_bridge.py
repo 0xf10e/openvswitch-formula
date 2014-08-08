@@ -10,7 +10,7 @@ Based on the Apache licensed salt/modules/bridge.py.
 '''
 
 import salt.utils
-from salt.exceptions import CommandExecutionError, SaltInvocationError
+from salt.exceptions import CommandExecutionError
 
 __func_alias__ = {
     'list_': 'list'
@@ -22,7 +22,7 @@ def __virtual__():
     required tools
     '''
     if salt.utils.which('ovs-vsctl'):
-      return True
+        return True
     return False
 
 
@@ -36,20 +36,22 @@ def test():
     else:
         return False
 
-def add(br):
+def add(bridge):
     '''
     Add a OVS bridge.
     '''
     # Make sure we don't create None bridges
-    retcode = __salt__['cmd.retcode']('ovs-vsctl add-br {0}'.format(str(br)))
+    retcode = __salt__['cmd.retcode'](
+        'ovs-vsctl add-br {0}'.format(str(bridge))
+        )
     if retcode == 0:
         return True
-    elif exists(br):
+    elif exists(bridge):
         return False
     else:
         raise CommandExecutionError
 
-def addif(br, iface):
+def addif(bridge, iface):
     '''
     On given bridge, add interface as port.
     
@@ -58,26 +60,28 @@ def addif(br, iface):
     salt '*' ovs_bridge.addif ovs-br0 eth0
     '''
     retcode = __salt__['cmd.retcode'](
-            'ovs-vsctl add-port {0} {1}'.format(str(br),str(iface))
+            'ovs-vsctl add-port {0} {1}'.format(str(bridge),str(iface))
             )
     if retcode == 0:
         return True
     else:
         return False
 
-def delete(br):
+def delete(bridge):
     '''
     Delete given OVS bridge.
     '''
     # Managed to create a None bridge, forcing str() to
     # get rid of those:
-    retcode = __salt__['cmd.retcode']('ovs-vsctl del-br {0}'.format(str(br)))
-    if retcode == 0 and not exists(str(br)):
+    retcode = __salt__['cmd.retcode'](
+        'ovs-vsctl del-br {0}'.format(str(bridge))
+        )
+    if retcode == 0 and not exists(str(bridge)):
         return True
     else:
         return False
 
-def delif(br, iface):
+def delif(bridge, iface):
     '''
     On given bridge, delete interface as port.
     
@@ -86,7 +90,7 @@ def delif(br, iface):
     salt '*' ovs_bridge.delif ovs-br0 eth0
     '''
     retcode = __salt__['cmd.retcode'](
-            'ovs-vsctl del-port {0} {1}'.format(str(br),str(iface))
+            'ovs-vsctl del-port {0} {1}'.format(str(bridge),str(iface))
             )
     if retcode == 0:
         return True
@@ -94,11 +98,11 @@ def delif(br, iface):
         return False
 
 
-def exists(br):
+def exists(bridge):
     '''
     Check if given OVS bridge exists.
     '''
-    retcode = __salt__['cmd.retcode']('ovs-vsctl br-exists {0}'.format(br))
+    retcode = __salt__['cmd.retcode']('ovs-vsctl br-exists {0}'.format(bridge))
     if retcode == 0:
         return True
     # From `ovs-vsctl --help`:
@@ -121,19 +125,19 @@ def find_interfaces(*args):
     salt '*' ovs_bridge.find_interfaces eth0 [eth1...]
     '''
 
-    ifdict = {}
+    iface_dict = {}
 
     for iface in args:
-        for br in list_():
-            if iface in interfaces(br):
-                ifdict[iface] = br
+        for bridge in list_():
+            if iface in interfaces(bridge):
+                iface_dict[iface] = bridge
                 break
         else:
-            ifdict[iface] = None
+            iface_dict[iface] = None
 
-    return ifdict
+    return iface_dict
 
-def interfaces(br):
+def interfaces(bridge):
     '''
     Returns interfaces attached to a bridge
 
@@ -143,11 +147,11 @@ def interfaces(br):
 
     salt '*' ovs_bridge.interfaces br0
     '''
-    if not exists(br):
+    if not exists(bridge):
         return None
 
     ports = []
-    cmd_output = __salt__['cmd.run']('ovs-vsctl list-ports {0}'.format(br))
+    cmd_output = __salt__['cmd.run']('ovs-vsctl list-ports {0}'.format(bridge))
     for line in cmd_output.splitlines():
         ports += [line]
         
