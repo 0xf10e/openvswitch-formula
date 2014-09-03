@@ -13,20 +13,20 @@
 auto lo
 iface lo inet loopback
 
-{% for dev, settings in salt['pillar.get']('interfaces',{}).items() -%}
+{% for dev, settings in interfaces.items() -%}
   {% if settings.has_key('comment') -%}
 # {{ settings['comment'] }}
   {%- endif -%}
 auto {{ dev }}
   {%- if dev.startswith('vlan') -%}
     {%- set vlan = dev[4:] -%}
+    {%- set raw_dev = settings.raw_dev -%}
   {%- elif dev.split('.')|count == 2 and dev.split('.')[1].isalnum() -%}
     {%- set raw_dev = dev.split('.')[0] -%}
-    {%- set vlan = dev.split('.')[1] %}
-  {%- else %}
-    {%- set vlan = False %}
-    {%- set raw_dev = salt['pillar.get']('interfaces:'+dev+':raw_dev') %}
-  {%- endif %}
+    {%- set vlan = dev.split('.')[1] -%}
+  {%- else -%}
+    {%- set vlan = False -%}
+  {%- endif -%}
   {%- if settings.has_key('v4addr') %}
 iface {{ dev }} inet static
     {% if vlan -%}
@@ -37,7 +37,7 @@ iface {{ dev }} inet static
     address   {{ addr['ip'] }}
     netmask	  {{ addr['netmask'] }}
     network   {{ addr['network'] }}
-    {% if settings.has_key('primary') -%}
+    {% if settings.has_key('primary') and subnet.has_key('gateway') -%}
 	gateway   {{ subnet['gateway'] }}
     {% endif -%}
 	broadcast {{ addr['broadcast'] }}
@@ -54,4 +54,11 @@ iface {{ dev }} inet6 static
     {%- if subnet.has_key('scope') %}
     scope     {{ subnet['scope'] }}
     {%- else %} # is scope necessary for inet6? {% endif %} {% endif %}
+  {%- if settings.has_key('uplink') %}
+# uplink for {{ iface }}
+auto {{ settings.uplink }}
+iface {{ settings.uplink }} inet manual
+    post-up ip link set promisc on {{ settings.uplink }}
+    pre-down ip link set promisc off {{ settings.uplink }}
+  {%- endif %}
 {% endfor %}
