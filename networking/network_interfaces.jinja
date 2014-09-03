@@ -1,0 +1,57 @@
+###
+### ! SaltStack managed file !
+### Your changes may be reverted at any given point in time.
+### Contact your sysadmin for permanent changes.
+###
+#
+## ! OpenVSwitch-adapted network/interfaces ! 
+#
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+{% for dev, settings in salt['pillar.get']('interfaces',{}).items() -%}
+  {% if settings.has_key('comment') -%}
+# {{ settings['comment'] }}
+  {%- endif -%}
+auto {{ dev }}
+  {%- if dev.startswith('vlan') -%}
+    {%- set vlan = dev[4:] -%}
+  {%- elif dev.split('.')|count == 2 and dev.split('.')[1].isalnum() -%}
+    {%- set raw_dev = dev.split('.')[0] -%}
+    {%- set vlan = dev.split('.')[1] %}
+  {%- else %}
+    {%- set vlan = False %}
+    {%- set raw_dev = salt['pillar.get']('interfaces:'+dev+':raw_dev') %}
+  {%- endif %}
+  {%- if settings.has_key('v4addr') %}
+iface {{ dev }} inet static
+    {% if vlan -%}
+    vlan-raw-device {{ raw_dev }}
+    {% endif -%}
+    {% set addr = salt['netaddr_mod.ip'](settings['v4addr']).values()[0] -%}
+    {% set subnet = salt['pillar.get']('subnets:' + addr['cidr'], {}) -%}
+    address   {{ addr['ip'] }}
+    netmask	  {{ addr['netmask'] }}
+    network   {{ addr['network'] }}
+    {% if settings.has_key('primary') -%}
+	gateway   {{ subnet['gateway'] }}
+    {% endif -%}
+	broadcast {{ addr['broadcast'] }}
+  {%- endif %}
+  {% if settings.has_key('v6addr') %}
+iface {{ dev }} inet6 static
+  {%- set addr = salt['netaddr_mod.ip'](settings['v6addr']).values()[0] %}
+  {%- set subnet = salt['pillar.get']('subnets:' + addr['cidr']|replace(":","_")) %}
+    address   {{ addr['ip'] }}
+    netmask   {{ addr['prefixlen'] }}
+    {%- if subnet.has_key('privext') %}
+    privext   {{ subnet['privext'] }}
+    {%- endif %}
+    {%- if subnet.has_key('scope') %}
+    scope     {{ subnet['scope'] }}
+    {%- else %} # is scope necessary for inet6? {% endif %} {% endif %}
+{% endfor %}
