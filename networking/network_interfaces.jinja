@@ -16,7 +16,7 @@ iface lo inet loopback
 {% for dev, settings in interfaces.items() -%}
   {% if settings.has_key('comment') -%}
 # {{ settings['comment'] }}
-  {%- endif -%}
+  {%- endif %}
 auto {{ dev }}
   {%- if dev.startswith('vlan') -%}
     {%- set vlan = dev[4:] -%}
@@ -55,7 +55,7 @@ iface {{ dev }} inet6 static
     scope     {{ subnet['scope'] }}
     {%- else %} # is scope necessary for inet6? {% endif %} {% endif %}
   {%- if settings.has_key('uplink') %}
-# uplink for {{ iface }}
+# uplink for {{ dev }}
 auto {{ settings.uplink }}
 iface {{ settings.uplink }} inet manual
     post-up ip link set promisc on {{ settings.uplink }}
