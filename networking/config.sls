@@ -1,42 +1,47 @@
 {% if salt['pillar.get']('interfaces', False) %}
-  {% set requires_linux_br = False %}
-  {% set requires_ovs = False %}
-  {% for iface in salt['pillar.get']('interfaces').keys() %}
-    {% if iface.startswith('br') %}
-      {% if salt['pillar.get']('interfaces:{0}:type'.format(iface)) == 'ovs' %}
-        {% set requires_ovs = True %}
-      {% elif salt['pillar.get']('interfaces:{0}:type'.format(iface)) == 'linux-bridge' %}
-        {% set requires_linux_br = True %}
-      {% endif %}
-    {% endif %}
-  {% endfor %}
   {% if grains['os_family'] == 'Debian' %}
 /etc/network/interfaces:
   file.managed:
     - source: salt://networking/network_interfaces.jinja
-    - saltenv: openvswitch
     - template: jinja
+    - defaults: 
+        subnets: {{ salt['pillar.get']('subnets') }}
+    {% if not salt['pillar.get']('openvswitch:bridges', False) %}
+        interfaces: {{ salt['pillar.get']('interfaces') }}
+    {% else %}
+        interfaces:
+      {% for iface, settings in salt['pillar.get']('interfaces', {}).items() %}
+        {% for bridge in salt['pillar.get']('openvswitch:bridges', {}).keys() %}
+          {% if iface in salt['pillar.get']('openvswitch:bridges:{0}:ports'.format(bridge),[]) -%}
+            {% if salt['ovs_bridge.exists'](bridge) %}
+            {{ bridge }}:
+              {% if settings.has_key('comment') %}
+                comment: {{ salt['pillar.get']('interfaces:{0}:comment'.format(iface)) }}
+              {% endif %}
+              {% if settings.has_key('v4addr') %}
+                v4addr: {{ salt['pillar.get']('interfaces:{0}:v4addr'.format(iface)) }}
+              {% endif %}
+              {% if settings.has_key('v6addr') %}
+                v6addr: {{ salt['pillar.get']('interfaces:{0}:v6addr'.format(iface)) }}
+              {% endif %}
+              {% if settings.has_key('primary') %}
+                primary: {{ salt['pillar.get']('interfaces:{0}:primary'.format(iface)) }}
+              {% endif %}
+                uplink: {{ iface }}
+            {% else %} {# bridge doesn't exist (yet) #}
+            {{ iface }}: {{ settings }}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    {% endif %}
     - require:
       - pkg: python-netaddr
-    {% if requires_ovs %}
-      - pkg: openvswitch-switch
-    {% endif %}
-    {% if requires_linux_br %}
-      - pkg: bridge-utils
-    {% endif %}
+    - require_in:
+      - neutron.openvswitch
     {#- module: net_addr#}
 
 python-netaddr:
   pkg.installed
-
-    {% if requires_ovs %}
-openvswitch-switch:
-  pkg.installed
-    {% endif %}
-
-    {% if requires_linux_br %}
-bridge-utils:
-  pkg.installed
-    {% endif %}
   {% endif %}
 {% endif %}

@@ -4,6 +4,8 @@
 ### Contact your sysadmin for permanent changes.
 ###
 #
+## ! OpenVSwitch-adapted network/interfaces ! 
+#
 # This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
 
@@ -11,51 +13,38 @@
 auto lo
 iface lo inet loopback
 
-{% for iface, settings in salt['pillar.get']('interfaces',{}).items() -%}
-  {% if iface.startswith('br') and settings.haskey('type') and settings.haskey('uplink') %}
-    {% if settings['type'] == 'ovs' %}
-      {% if not ovs_bridge.exists(iface) %}
-        {% set iface = settings.uplink %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
+{% for dev, settings in interfaces.items() -%}
   {% if settings.has_key('comment') -%}
 # {{ settings['comment'] }}
-  {%- endif -%}
-auto {{ iface }}
-  {%- if iface.startswith('vlan') -%}
-    {%- set vlan = iface[4:] -%}
-  {%- elif iface.split('.')|count == 2 and iface.split('.')[1].isalnum() -%}
-    {%- set raw_iface = iface.split('.')[0] -%}
-    {%- set vlan = iface.split('.')[1] %}
-  {%- else %}
-    {%- set vlan = False %}
-    {%- set raw_iface = salt['pillar.get']('interfaces:'+iface+':raw_iface') %}
   {%- endif %}
+auto {{ dev }}
+  {%- if dev.startswith('vlan') -%}
+    {%- set vlan = dev[4:] -%}
+    {%- set raw_dev = settings.raw_dev -%}
+  {%- elif dev.split('.')|count == 2 and dev.split('.')[1].isalnum() -%}
+    {%- set raw_dev = dev.split('.')[0] -%}
+    {%- set vlan = dev.split('.')[1] -%}
+  {%- else -%}
+    {%- set vlan = False -%}
+  {%- endif -%}
   {%- if settings.has_key('v4addr') %}
-iface {{ iface }} inet static
+iface {{ dev }} inet static
     {% if vlan -%}
-    vlan-raw-ifaceice {{ raw_iface }}
+    vlan-raw-device {{ raw_dev }}
     {% endif -%}
-    {% set addr = salt['net_addr.ip'](settings['v4addr']).values()[0] -%}
+    {% set addr = salt['netaddr_mod.ip'](settings['v4addr']).values()[0] -%}
     {% set subnet = salt['pillar.get']('subnets:' + addr['cidr'], {}) -%}
     address   {{ addr['ip'] }}
     netmask	  {{ addr['netmask'] }}
     network   {{ addr['network'] }}
-    {% if settings.has_key('primary') -%}
+    {% if settings.has_key('primary') and subnet.has_key('gateway') -%}
 	gateway   {{ subnet['gateway'] }}
     {% endif -%}
 	broadcast {{ addr['broadcast'] }}
   {%- endif %}
-  {% if settings.haskey('uplink') and iface != settings['uplink'] %}
-# {{ settings['uplink'] }} as uplink for {{ iface }}:
-iface {{ settings['uplink'] }} inet manual
-  post-up ip link set promisc on $IFACE
-  pre-down ip link set promisc off $IFACE
-  {% endif %}
   {% if settings.has_key('v6addr') %}
-iface {{ iface }} inet6 static
-  {%- set addr = salt['net_addr.ip'](settings['v6addr']).values()[0] %}
+iface {{ dev }} inet6 static
+  {%- set addr = salt['netaddr_mod.ip'](settings['v6addr']).values()[0] %}
   {%- set subnet = salt['pillar.get']('subnets:' + addr['cidr']|replace(":","_")) %}
     address   {{ addr['ip'] }}
     netmask   {{ addr['prefixlen'] }}
@@ -65,4 +54,11 @@ iface {{ iface }} inet6 static
     {%- if subnet.has_key('scope') %}
     scope     {{ subnet['scope'] }}
     {%- else %} # is scope necessary for inet6? {% endif %} {% endif %}
+  {%- if settings.has_key('uplink') %}
+# uplink for {{ dev }}
+auto {{ settings.uplink }}
+iface {{ settings.uplink }} inet manual
+    post-up ip link set promisc on {{ settings.uplink }}
+    pre-down ip link set promisc off {{ settings.uplink }}
+  {%- endif %}
 {% endfor %}
