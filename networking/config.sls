@@ -12,11 +12,15 @@
         interfaces:
       {% for iface, settings in salt['pillar.get']('interfaces', {}).items() %}
         {% for bridge in salt['pillar.get']('openvswitch:bridges', {}).keys() %}
-          {% if iface in salt['pillar.get']('openvswitch:bridges:{0}:ports'.format(bridge),[]) -%}
+          {% if iface == salt['pillar.get']('openvswitch:bridges:{0}:reuse_netcfg'.format(bridge),[]) -%}
             {% if salt['ovs_bridge.exists'](bridge) %}
             {{ bridge }}:
+              {% set br_comment = salt['pillar.get']('openvswitch:bridges:{0}:comment'.format(bridge), False) %}
+              {% if br_comment %}
+                comment: {{ br_comment }}
+              {% endif %}
               {% if settings.has_key('comment') %}
-                comment: {{ salt['pillar.get']('interfaces:{0}:comment'.format(iface)) }}
+                uplink_comment: {{ salt['pillar.get']('interfaces:{0}:comment'.format(iface)) }}
               {% endif %}
               {% if settings.has_key('v4addr') %}
                 v4addr: {{ salt['pillar.get']('interfaces:{0}:v4addr'.format(iface)) }}
