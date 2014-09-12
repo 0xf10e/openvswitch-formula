@@ -19,7 +19,6 @@
       % for iface, settings in salt['pillar.get']('interfaces', {}).items():
         % if iface not in all_uplinks:
             ${iface}: ${settings}
-            debug_${iface}: ${iface} is no uplink
         % else:
           <%
             wrong_bridges = []
@@ -59,7 +58,6 @@
                 uplink: ${ iface }
           % else:
             ${ iface }: ${ settings }
-            debug_${ iface }: "${ wrong_bridges } of ${ all_bridges } don't have ${iface} as uplink"
           % endif 
         % endif 
       % endfor
