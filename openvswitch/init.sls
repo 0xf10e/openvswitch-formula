@@ -8,6 +8,17 @@ openvswitch:
     - running
     - name: {{ openvswitch.service }}
     - enable: True
+{# currently this module won't build on Ubuntu 14.04: #}
+{% if grains.os == 'Ubuntu' && grain.osrelease < 14.04 %}
+  kmod.present:
+    - persist=True
+    - requite:
+      - pkg: openvswitch-datapath-dkms
+
+openvswitch-datapath-dkms:
+  pkg.installed 
+{% endif %}
+
 
 {% for bridge, config in salt['pillar.get']('openvswitch:bridges',{}).iteritems() %}
 {{ bridge }}:
