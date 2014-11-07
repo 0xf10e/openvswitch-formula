@@ -60,3 +60,14 @@ python-netaddr:
   pkg.installed
   {% endif %}
 {% endif %}
+
+# make sure we got /some/ nameserver configured:
+{% if not salt['file.search']('/etc/resolv.conf', 'nameserver') %}
+add nameserver(s) to /etc/resolv.conf:
+  file.append:
+    - name: /etc/resolv.conf
+    - text: 
+  {%- for server in salt['pillar.get']('dns:servers',['8.8.8.8']) %}
+        - nameserver {{ server }}
+  {%- endfor %}
+{%- endif %}
