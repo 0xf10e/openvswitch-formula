@@ -62,7 +62,12 @@ python-netaddr:
 {% endif %}
 
 # make sure we got /some/ nameserver configured:
-{% if not salt['file.search']('/etc/resolv.conf', 'nameserver') %}
+{% if not salt['file.search'](
+        '/etc/resolv.conf', 'nameserver {0}'.format(
+            salt['pillar.get'](
+                'dns:servers', ['8.8.8.8']
+            )[0]
+        )) %}
 add nameserver(s) to /etc/resolv.conf:
   file.append:
     - name: /etc/resolv.conf
