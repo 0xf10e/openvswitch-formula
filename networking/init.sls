@@ -10,6 +10,7 @@ networking service:
 # you can't "restart" the networking service on Debian and
 # derivates (like Ubuntu) so run those commands instead:
 {% for iface in salt['pillar.get']('interfaces', {}).keys() %}
+ {% if iface in salt['grains.get']('hwaddr_interfaces').keys() %}
 ifdown/ifup {{ iface }}:
   cmd.run:
     - name: "ifdown {{ iface }}; ifup {{ iface }}"
@@ -17,4 +18,5 @@ ifdown/ifup {{ iface }}:
       - service: networking
     - require: 
       - file: /etc/network/interfaces
+  {% endif %}
 {% endfor %}
