@@ -39,7 +39,7 @@ iface {{ dev }} inet static
     {% if settings.has_key('primary') and subnet.has_key('gateway') -%}
 	gateway   {{ subnet['gateway'] }}
     {% endif -%}
-	broadcast {{ addr['broadcast'] }}
+	broadcast {{ settings['broadcast'] }}
   {%- endif %}
   {% if settings.has_key('v6addr') %}
 iface {{ dev }} inet6 static
