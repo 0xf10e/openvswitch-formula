@@ -32,7 +32,11 @@ iface {{ dev }} inet static
     {% if vlan -%}
     vlan-raw-device {{ raw_dev }}
     {% endif -%}
-    {% set subnet = salt['pillar.get']('subnets:' + settings['v4addr'], {}) -%}
+    {% set subnet = salt['pillar.get'](
+        'subnets:{0}/{1}'.format(
+            settings['network'], 
+            settings['v4addr'].split('/')[1]), 
+        {}) -%}
     address   {{ settings['v4addr'].split('/')[0] }}
     netmask	  {{ settings['netmask'] }}
     network   {{ settings['network'] }}

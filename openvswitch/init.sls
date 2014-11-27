@@ -9,7 +9,7 @@ openvswitch:
     - name: {{ openvswitch.service }}
     - enable: True
 {# currently this module won't build on Ubuntu 14.04: #}
-{% if grains.os == 'Ubuntu' && grain.osrelease < 14.04 %}
+{% if salt['grains.get']('os') == 'Ubuntu' and salt['grains.get']('osrelease') < 14.04 %}
   kmod.present:
     - persist=True
     - requite:

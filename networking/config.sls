@@ -39,14 +39,14 @@ def cidr2broadcast(cidr):
     broadcast_int = network_int | (netmask_int ^ 0xFFFFFFFF)
     return int2quaddot(broadcast_int)
 
-def add_netmask_network(settings):
-  if settings.has_key('v4addr') and settings['v4addr'] != 'dhcp':
-    cidr = settings['v4addr']
-    netmask = prefixlen2netmask(cidr.split('/')[1])
-    settings['v4addr'] = cidr
-    settings['netmask'] = netmask
-    settings['network'] = int2quaddot(
-        quaddot2int(cidr.split('/')[0]) & quaddot2int(netmask))
+def cidr2network_options(cidr):
+  settings = {}
+  netmask = prefixlen2netmask(cidr.split('/')[1])
+  settings['v4addr'] = cidr
+  settings['netmask'] = netmask
+  settings['network'] = int2quaddot(
+      quaddot2int(cidr.split('/')[0]) & quaddot2int(netmask))
+  settings['broadcast'] = cidr2broadcast(cidr)
   return settings
 
 def run():
@@ -58,16 +58,12 @@ def run():
         interfaces = {}
         for iface, settings in salt['pillar.get']('interfaces', {}).items():
           if settings.has_key('v4addr') and settings['v4addr'] != 'dhcp':
-            interfaces[iface] = add_netmask_network(settings)
-            interfaces[iface]['broadcast'] = \
-                cidr2broadcast(settings['v4addr'])
+            interfaces[iface] = cidr2network_options(settings['v4addr'])
       elif not salt['pillar.get']('openvswitch:bridges', False):
         interfaces = {}
         for iface, settings in salt['pillar.get']('interfaces', {}).items():
           if settings.has_key('v4addr') and settings['v4addr'] != 'dhcp':
-            interfaces[iface] = add_netmask_network(settings)
-            interfaces[iface]['broadcast'] = \
-                cidr2broadcast(settings['v4addr'])
+            interfaces[iface] = cidr2network_options(settings['v4addr'])
       else:
         interfaces = {}
         for iface, settings in salt['pillar.get']('interfaces', {}).items():
@@ -86,11 +82,7 @@ def run():
               if settings.has_key('v4addr'):
                 cidr = salt['pillar.get'](
                     'interfaces:{0}:v4addr'.format(iface))
-                netmask = prefixlen2netmask(cidr.split('/')[1])
-                interfaces[bridge]['v4addr'] = cidr
-                interfaces[bridge]['netmask'] = netmask
-                interfaces[bridge]['network'] = (
-                    quaddot2int(cidr.split('/')[0]) & quaddot2int(netmask))
+                interfaces[bridge] = cidr2network_options(settings['v4addr'])
               if settings.has_key('v6addr'):
                 interfaces[bridge]['v6addr'] = salt['pillar.get'](
                     'interfaces:{0}:v6addr'.format(iface))
@@ -106,11 +98,7 @@ def run():
               if settings.has_key('v4addr'):
                 cidr = salt['pillar.get'](
                     'interfaces:{0}:v4addr'.format(iface))
-                netmask = prefixlen2netmask(cidr.split('/')[1])
-                interfaces[iface]['v4addr'] = cidr
-                interfaces[iface]['netmask'] = netmask
-                interfaces[iface]['network'] = (
-                    quaddot2int(cidr.split('/')[0]) & quaddot2int(netmask))
+                interfaces[iface] = cidr2network_options(cidr)
 
       state['/etc/network/interfaces'] = {
         'file.managed': [
