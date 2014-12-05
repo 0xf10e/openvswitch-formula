@@ -1,0 +1,2 @@
+{% if salt['pillar.get']('dns:options') %}
+option {%for option in salt['pillar.get']('dns:options',[])%}{{option}} {% endfor %}{%endif%}

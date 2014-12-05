@@ -1,0 +1,4 @@
+{% for nameserver in salt['pillar.get']('dns:servers',['8.8.8.8']) %}
+nameserver {{nameserver}} {% endfor %}
+{% if salt['pillar.get']('dns:domains', False) %}
+search {%for domain in salt['pillar.get']('dns:domains',[])%}{{domain}} {% endfor %}{%endif%}

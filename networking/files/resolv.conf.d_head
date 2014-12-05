@@ -1,0 +1,11 @@
+###################################################
+#    This file is restored at reboot.             #
+#                                                 #
+# If you're going to change anything below do not #
+# complain about failing logins or missing NFS    #
+# mounts until you've rebooted your workstation!  #
+#                                                 #
+# (The source files are managed via SaltStack so  #
+# changes to those may be reverted at any point   #
+# in time.)                                       #
+###################################################
