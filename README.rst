@@ -14,6 +14,8 @@ A saltstack formula for deploying OpenVSwitch_.
 TODO
 ====
    
+ - remove `network.managed` from the `openvswitch` state as it's 
+   messing with `/etc/network/interfaces`
  - get network.get_route(iface=None,dest=None) into SaltStack so 
    we don't have to use a custom ``network``-module
  - add documentation for ``_modules/ovs_bridge``, ``_states/ovs_bridge``

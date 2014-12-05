@@ -77,25 +77,41 @@ def run():
                   'comment': salt['pillar.get'](
                         'openvswitch:bridges:{0}:comment'.format(
                             bridge), False) }
-              if settings.has_key('comment'):
-                interface[bridge]['uplink_comment'] = salt['pillar.get'](
-                    'interfaces:{0}:comment'.format(iface))
-              if settings.has_key('v4addr'):
-                cidr = salt['pillar.get'](
-                    'interfaces:{0}:v4addr'.format(iface))
-                interfaces[bridge] = cidr2network_options(settings['v4addr'], settings)
-              if settings.has_key('v6addr'):
-                interfaces[bridge]['v6addr'] = salt['pillar.get'](
-                    'interfaces:{0}:v6addr'.format(iface))
-              if settings.has_key('primary'):
-                interfaces[bridge]['primary'] = salt['pillar.get'](
-                    'interfaces:{0}:primary'.format(iface))
-              interfaces[bridge]['uplink'] = iface 
+                if settings.has_key('comment'):
+                  interfaces[bridge]['uplink_comment'] = salt['pillar.get'](
+                      'interfaces:{0}:comment'.format(iface))
+                if settings.has_key('v4addr'):
+                  cidr = salt['pillar.get'](
+                      'interfaces:{0}:v4addr'.format(iface))
+                  interfaces[bridge] = cidr2network_options(settings['v4addr'], settings)
+                  if interfaces.has_key(iface):
+                    interfaces.pop(iface)
+                if settings.has_key('v6addr'):
+                  interfaces[bridge]['v6addr'] = salt['pillar.get'](
+                      'interfaces:{0}:v6addr'.format(iface))
+                  if interfaces.has_key(iface):
+                    interfaces.pop(iface)
+                if settings.has_key('primary'):
+                  interfaces[bridge]['primary'] = salt['pillar.get'](
+                      'interfaces:{0}:primary'.format(iface))
+                  if interfaces.has_key(iface):
+                    interfaces.pop(iface)
+                interfaces[bridge]['uplink'] = iface 
+              else:
+                # bridge doesn't exist (yet)
+                # TODO: de-duplicate!
+                interfaces[iface] = settings
+                interfaces[iface]['comment'] = \
+                      "Bridge {0} doesn't exist yet".format(bridge)
+                if settings.has_key('v4addr'):
+                  cidr = salt['pillar.get'](
+                      'interfaces:{0}:v4addr'.format(iface))
+                  interfaces[iface] = cidr2network_options(cidr, settings)
             else:
-              # bridge doesn't exist (yet)
+              # TODO: de-duplicate!
               interfaces[iface] = settings
-              interfaces[iface]['comment'] = \
-                    "Bridge {0} doesn't exist yet".format(bridge)
+              #interfaces[iface]['comment'] = \
+              #      "Bridge {0} doesn't exist yet".format(bridge)
               if settings.has_key('v4addr'):
                 cidr = salt['pillar.get'](
                     'interfaces:{0}:v4addr'.format(iface))
