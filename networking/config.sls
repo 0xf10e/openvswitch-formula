@@ -92,15 +92,25 @@ def run():
             for iface, settings in salt['pillar.get']('interfaces', {}).items():
                 if settings.has_key('v4addr') and settings['v4addr'] != 'dhcp':
                     interfaces[iface] = cidr2network_options(settings['v4addr'])
+                if settings.has_key('comment'):
+                    interfaces[iface]['comment'] = settings['comment']
+                if settings.has_key('primary'):
+                    interfaces[iface]['primary'] = settings['primary']
             state['no module ovs_bridge'] = { 
-                    'cmd.run': {'name': 
-                        'echo function ovs_bridge.exists missing' }
+                    'cmd.run': [
+                        {'name': 
+                            'echo function ovs_bridge.exists missing' },
+                        ]
                     }
         elif not salt['pillar.get']('openvswitch:bridges', False):
             interfaces = {}
             for iface, settings in salt['pillar.get']('interfaces', {}).items():
                 if settings.has_key('v4addr') and settings['v4addr'] != 'dhcp':
                     interfaces[iface] = cidr2network_options(settings['v4addr'])
+                if settings.has_key('comment'):
+                    interfaces[iface]['comment'] = settings['comment']
+                if settings.has_key('primary'):
+                    interfaces[iface]['primary'] = settings['primary']
         else:
             interfaces = {}
             br_pillar = salt['pillar.get']('openvswitch:bridges', {})
@@ -114,6 +124,8 @@ def run():
                     if iface_config.has_key('v4addr'):
                         cidr = iface_config['v4addr']
                         interfaces[bridge] = cidr2network_options(cidr)
+                    if iface_config.has_key('primary'):
+                        interfaces[bridge]['primary'] = iface_config['primary']
                     if br_config.has_key('comment'):
                         interfaces[bridge]['comment'] = br_config['comment']
                     interfaces[bridge]['uplink'] = br_config['reuse_netcfg']
@@ -143,6 +155,8 @@ def run():
                         interfaces[iface] = cidr2network_options(cidr)
                     if settings.has_key('comment'):
                         interfaces[iface]['comment'] = settings['comment']
+                    if settings.has_key('primary'):
+                        interfaces[iface]['primary'] = settings['primary']
     # And now pass all this data to the template:              
     state['/etc/network/interfaces'] = {
             'file.managed': [
