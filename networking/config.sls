@@ -82,8 +82,12 @@ def run():
             'openvswitch:bridges', {}).items():
           if salt['ovs_bridge.exists'](bridge) and config.has_key('reuse_netcfg'):
             # TODO: Check if this interface exists!
-            interfaces[bridge] = salt['pillar.get'](
+            iface_config = salt['pillar.get'](
                 'interfaces:{0}'.format(config['reuse_netcfg']))
+            if iface_config.has_key('v4addr'):
+              cidr = salt['pillar.get'](
+                  'interfaces:{0}:v4addr'.format(config['reuse_netcfg']))
+              interfaces[bridge] = cidr2network_options(cidr, iface_config)
             interfaces[bridge]['uplink'] = config['reuse_netcfg']
             # TODO: comment & uplink_comment
 #              'comment': salt['pillar.get'](
