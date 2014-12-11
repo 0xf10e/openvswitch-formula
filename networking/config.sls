@@ -41,14 +41,15 @@ def cidr2broadcast(cidr):
 
 def cidr2network_options(cidr,settings={}):
   netmask = prefixlen2netmask(cidr.split('/')[1])
-  settings['v4addr'] = cidr
-  settings['netmask'] = netmask
-  settings['network'] = "{0}/{1}".format(
+  new_settings = {}
+  new_settings['v4addr'] = cidr
+  new_settings['netmask'] = netmask
+  new_settings['network'] = "{0}/{1}".format(
     int2quaddot(
         quaddot2int(cidr.split('/')[0]) & quaddot2int(netmask)),
     cidr.split('/')[1])
-  settings['broadcast'] = cidr2broadcast(cidr)
-  return settings
+  new_settings['broadcast'] = cidr2broadcast(cidr)
+  return new_settings
 
 def run():
   state = {}
@@ -78,66 +79,45 @@ def run():
             interfaces[iface] = cidr2network_options(settings['v4addr'], settings)
       else:
         interfaces = {}
-        for bridge, config in salt['pillar.get'](
+        for bridge, br_config in salt['pillar.get'](
             'openvswitch:bridges', {}).items():
-          if salt['ovs_bridge.exists'](bridge) and config.has_key('reuse_netcfg'):
+          if salt['ovs_bridge.exists'](bridge) and br_config.has_key('reuse_netcfg'):
+            interfaces[bridge] = {}
             # TODO: Check if this interface exists!
             iface_config = salt['pillar.get'](
-                'interfaces:{0}'.format(config['reuse_netcfg']))
+                'interfaces:{0}'.format(br_config['reuse_netcfg']))
             if iface_config.has_key('v4addr'):
-              cidr = salt['pillar.get'](
-                  'interfaces:{0}:v4addr'.format(config['reuse_netcfg']))
+              cidr = iface_config['v4addr']
               interfaces[bridge] = cidr2network_options(cidr, iface_config)
-            interfaces[bridge]['uplink'] = config['reuse_netcfg']
-            # TODO: comment & uplink_comment
-#              'comment': salt['pillar.get'](
-#                    'openvswitch:bridges:{0}:comment'.format(
-#                        bridge), False) }
-#            if settings.has_key('comment'):
-#              interfaces[bridge]['uplink_comment'] = salt['pillar.get'](
-#                  'interfaces:{0}:comment'.format(iface))
-#            if settings.has_key('v4addr'):
-#              cidr = salt['pillar.get'](
-#                  'interfaces:{0}:v4addr'.format(iface))
-#              interfaces[bridge] = cidr2network_options(settings['v4addr'], settings)
+            if br_config.has_key('comment'):
+              interfaces[bridge]['comment'] = br_config['comment']
+            interfaces[bridge]['uplink'] = br_config['reuse_netcfg']
+            if iface_config.has_key('comment'):
+              interfaces[bridge]['uplink_comment'] = iface_config['comment']
+#           # TODO: IPv6 config
 #            if settings.has_key('v6addr'):
 #              interfaces[bridge]['v6addr'] = salt['pillar.get'](
 #                  'interfaces:{0}:v6addr'.format(iface))
-#            if settings.has_key('primary'):
-#              interfaces[bridge]['primary'] = salt['pillar.get'](
-#                  'interfaces:{0}:primary'.format(iface))
-#            interfaces[bridge]['uplink'] = iface 
-#
-
+        # get a list of all interfaces used as uplinks...:
         uplinks = []
         for br_conf in interfaces.values():
           if br_conf.has_key('uplink'):
             uplinks += [ br_conf['uplink'] ]
+        # ...and interfaces not in this list will be passed
+        # to the template for /etc/network/interfaces:
         for iface, settings in salt['pillar.get']('interfaces', {}).items():
           if iface not in uplinks:
             interfaces[iface] = settings
+            # TODO: Get this comment back in there:
             #interfaces[iface]['comment'] = \
             #      "Bridge {0} doesn't exist yet".format(bridge)
             if settings.has_key('v4addr'):
               cidr = salt['pillar.get'](
                   'interfaces:{0}:v4addr'.format(iface))
               interfaces[iface] = cidr2network_options(cidr, settings)
-#          for bridge in salt['pillar.get']('openvswitch:bridges', {}).keys():
-#            if iface == salt['pillar.get'](
-#               'openvswitch:bridges:{0}:reuse_netcfg'.format(
-#                    bridge), []):
-#              else:
-#                # bridge doesn't exist (yet)
-#                # TODO: de-duplicate!
-#                interfaces[iface] = settings
-#                interfaces[iface]['comment'] = \
-#                      "Bridge {0} doesn't exist yet".format(bridge)
-#                if settings.has_key('v4addr'):
-#                  cidr = salt['pillar.get'](
-#                      'interfaces:{0}:v4addr'.format(iface))
-#                  interfaces[iface] = cidr2network_options(cidr, settings)
-#            else:
-#              # TODO: de-duplicate!
+            if settings.has_key('comment'):
+              interfaces[iface]['comment'] = settings['comment']
+              
 
       state['/etc/network/interfaces'] = {
         'file.managed': [
