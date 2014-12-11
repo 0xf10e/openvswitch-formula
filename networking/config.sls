@@ -52,6 +52,14 @@ def cidr2network_options(cidr,settings={}):
 
 def run():
   state = {}
+  # REWRITE:
+  # 1st: Iterate over bridges and add the existing ones
+  #      with config-data from their reuse_netcfg to the
+  #      dict 'interfaces'.
+  # 2nd: Iterate over interfaces and check which are not
+  #      listed in a interfaces[bridge]['uplink']. 
+  #      Add the remaining interfaces to the dict interfaces.
+
   if salt['pillar.get']('interfaces', False):
     if grains['os_family'] == 'Debian':
       if not 'ovs_bridge.exists' in salt:
@@ -60,6 +68,10 @@ def run():
         for iface, settings in salt['pillar.get']('interfaces', {}).items():
           if settings.has_key('v4addr') and settings['v4addr'] != 'dhcp':
             interfaces[iface] = cidr2network_options(settings['v4addr'], settings)
+        state['no module ovs_bridge'] = { 
+                'cmd.run': {'name': 
+                    'echo function ovs_bridge.exists missing' }
+                }
       elif not salt['pillar.get']('openvswitch:bridges', False):
         interfaces = {}
         for iface, settings in salt['pillar.get']('interfaces', {}).items():
@@ -84,18 +96,12 @@ def run():
                   cidr = salt['pillar.get'](
                       'interfaces:{0}:v4addr'.format(iface))
                   interfaces[bridge] = cidr2network_options(settings['v4addr'], settings)
-                  if interfaces.has_key(iface):
-                    interfaces.pop(iface)
                 if settings.has_key('v6addr'):
                   interfaces[bridge]['v6addr'] = salt['pillar.get'](
                       'interfaces:{0}:v6addr'.format(iface))
-                  if interfaces.has_key(iface):
-                    interfaces.pop(iface)
                 if settings.has_key('primary'):
                   interfaces[bridge]['primary'] = salt['pillar.get'](
                       'interfaces:{0}:primary'.format(iface))
-                  if interfaces.has_key(iface):
-                    interfaces.pop(iface)
                 interfaces[bridge]['uplink'] = iface 
               else:
                 # bridge doesn't exist (yet)
