@@ -1,8 +1,13 @@
 #!py
-# {% from "openvswitch/map.jinja" import openvswitch with context %}
+"""
+Py-renderer based state for openvswitch.init
+"""
 import yaml
 
 def run(): 
+    """
+    Function generating the state-data for openvswitch.init
+    """
     map_yaml = \
     """
     default:
@@ -41,7 +46,7 @@ def run():
         ]
         state['openvswitch-datapath-dkms'] = { 'pkg': 'installed' }
 
-    br_pillar = salt['pillar.get']('openvswitch:bridges',{})
+    br_pillar = salt['pillar.get']('openvswitch:bridges', {})
     interfaces = salt['network.interfaces']()
     for bridge, config in br_pillar.iteritems():
         br_state = 'configure {0}'.format(bridge)
@@ -101,11 +106,13 @@ def run():
                             {
                                 'cmd.run':
                                     [
-                                        {'name': 'ip link set promisc on dev ' +\
-                                                 '{0} '.format(uplink_iface) +\
-                                                 '&& ip addr del {0} '.format(
-                                                    netcfg['v4addr']) + \
-                                                 'dev {0}'.format(uplink_iface) },
+                                        {'name': 
+                                            ('ip link set promisc on dev ' +\
+                                            '{0} && ip addr del {1} dev {0}'
+                                                ).format(
+                                                    uplink_iface, 
+                                                    netcfg['v4addr']) 
+                                            },
                                         {'require': [
                                             {'ovs_bridge': br_state},
                                             {'cmd': br_state},
